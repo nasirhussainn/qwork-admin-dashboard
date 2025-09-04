@@ -16,10 +16,7 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
-import {
-  DataGrid,
-  GridToolbar,
-} from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import {
   Visibility,
   Delete,
@@ -30,9 +27,9 @@ import {
   PauseCircle,
 } from "@mui/icons-material";
 
-import { fetchUsers } from "../services/api"; // 🔹 use your service
-import api from "../services/api"; // 🔹 for PUT/DELETE
+import api from "../services/api"; // 🔹 for DELETE
 import UserDetailModal from "../components/UserDetailModal";
+import { fetchUsers, updateUserStatus } from "../services/api";
 
 const getStatusChip = (params) => {
   const status = params.value;
@@ -51,6 +48,18 @@ const getStatusChip = (params) => {
       sx={{ fontWeight: "bold", minWidth: 85 }}
     />
   );
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleDateString();
+  } catch (error) {
+    return "";
+  }
 };
 
 const Accounts = () => {
@@ -74,13 +83,18 @@ const Accounts = () => {
       setLoading(true);
       const data = await fetchUsers(1, 100); // API call
       console.log("API response:", data);
-  
-      setUsers(
-        (data?.users || []).map((u) => ({
-          ...u,
-          name: `${u.profile?.first_name || ""} ${u.profile?.last_name || ""}`,
-        }))
-      );
+
+      // Process users data and format dates properly
+      const processedUsers = (data?.users || []).map((u) => ({
+        ...u,
+        name: `${u.profile?.first_name || ""} ${u.profile?.last_name || ""}`.trim(),
+        // Ensure created_at is a proper date string for sorting
+        created_at: u.created_at || null,
+        // Create a formatted date field for display
+        formatted_date: formatDate(u.created_at),
+      }));
+
+      setUsers(processedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       setNotification({
@@ -92,7 +106,6 @@ const Accounts = () => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     loadUsers();
@@ -108,18 +121,17 @@ const Accounts = () => {
     setActiveMenuId(null);
   };
 
-  // ✅ Update status with api instance
+  // ✅ Update status
   const handleStatusUpdate = async (userId, status) => {
     try {
-      await api.put(`/account/update-status/${userId}`, { status }); // 🔹 adjust endpoint if needed
+      const res = await updateUserStatus(userId, status); // 🔹 use service
       setUsers(
-        users.map((user) =>
-          user.id === userId ? { ...user, status } : user
-        )
+        users.map((user) => (user.id === userId ? { ...user, status } : user))
       );
       setNotification({
         open: true,
-        message: `User status updated to ${status}`,
+        message:
+          res?.message || `User status updated to "${status}" successfully`,
         severity: "success",
       });
     } catch (error) {
@@ -177,9 +189,11 @@ const Accounts = () => {
     {
       field: "created_at",
       headerName: "Date Joined",
-      type: "date",
       width: 150,
-      valueGetter: (params) => new Date(params.value),
+      renderCell: (params) => {
+        const formattedDate = formatDate(params.value);
+        return formattedDate || "N/A";
+      },
     },
     {
       field: "actions",
@@ -211,16 +225,28 @@ const Accounts = () => {
             open={Boolean(anchorEl) && activeMenuId === params.row.id}
             onClose={handleMenuClose}
           >
-            <MenuItem onClick={() => handleStatusUpdate(params.row.id, "approved")}>
+            <MenuItem
+              disabled={params.row.status === "approved"}
+              onClick={() => handleStatusUpdate(params.row.id, "approved")}
+            >
               <CheckCircle fontSize="small" sx={{ mr: 1 }} /> Approve
             </MenuItem>
-            <MenuItem onClick={() => handleStatusUpdate(params.row.id, "rejected")}>
+            <MenuItem
+              disabled={params.row.status === "rejected"}
+              onClick={() => handleStatusUpdate(params.row.id, "rejected")}
+            >
               <Block fontSize="small" sx={{ mr: 1 }} /> Reject
             </MenuItem>
-            <MenuItem onClick={() => handleStatusUpdate(params.row.id, "banned")}>
+            <MenuItem
+              disabled={params.row.status === "banned"}
+              onClick={() => handleStatusUpdate(params.row.id, "banned")}
+            >
               <Gavel fontSize="small" sx={{ mr: 1 }} /> Ban
             </MenuItem>
-            <MenuItem onClick={() => handleStatusUpdate(params.row.id, "hold")}>
+            <MenuItem
+              disabled={params.row.status === "hold"}
+              onClick={() => handleStatusUpdate(params.row.id, "hold")}
+            >
               <PauseCircle fontSize="small" sx={{ mr: 1 }} /> Hold
             </MenuItem>
             <Divider />
@@ -235,7 +261,7 @@ const Accounts = () => {
       ),
     },
   ];
-
+  
   return (
     <Box sx={{ p: isMobile ? 1 : 3 }}>
       <Card
@@ -263,11 +289,15 @@ const Accounts = () => {
             <DataGrid
               rows={users}
               columns={columns}
-              pageSize={10}
-              rowsPerPageOptions={[5, 10, 20]}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10 },
+                },
+              }}
+              pageSizeOptions={[5, 10, 20]}
               checkboxSelection
-              disableSelectionOnClick
-              components={{ Toolbar: GridToolbar }}
+              disableRowSelectionOnClick
+              slots={{ toolbar: GridToolbar }}
               sx={{
                 backgroundColor: "white",
                 borderRadius: 2,

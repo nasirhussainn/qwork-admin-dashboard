@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://portalapp.digidine.us',
+        // target: 'https://portalapp.digidine.us',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
       }

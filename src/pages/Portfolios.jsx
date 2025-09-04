@@ -26,7 +26,7 @@ import {
   PauseCircle,
 } from "@mui/icons-material";
 
-import { fetchPortfolios } from "../services/api"; // ✅ use your API service
+import { fetchPortfolios, updatePortfolioStatus } from "../services/api"; 
 import PortfolioDetailModal from "../components/PortfolioDetailModal";
 
 // --- Helpers ---
@@ -36,7 +36,6 @@ const getStatusChip = (params) => {
     pending: "warning",
     approved: "success",
     rejected: "error",
-    hold: "info",
   };
   return (
     <Chip
@@ -46,6 +45,18 @@ const getStatusChip = (params) => {
       sx={{ fontWeight: "bold", minWidth: 85 }}
     />
   );
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString();
+  } catch (error) {
+    return "N/A";
+  }
 };
 
 const Portfolios = () => {
@@ -70,8 +81,10 @@ const Portfolios = () => {
       try {
         setLoading(true);
         const data = await fetchPortfolios(1, 100); // ✅ fetch from API
+        console.log("Portfolios API response:", data);
         setPortfolios(data?.data || []); // assuming API response has { data: [...] }
       } catch (error) {
+        console.error("Error fetching portfolios:", error);
         setNotification({
           open: true,
           message: "Failed to load portfolios.",
@@ -95,19 +108,36 @@ const Portfolios = () => {
     setActiveMenuId(null);
   };
 
-  const handleStatusUpdate = (portfolioId, status) => {
+// --- Handlers ---
+const handleStatusUpdate = async (portfolioId, status) => {
+  try {
+    // 🔄 Call API
+    await updatePortfolioStatus(portfolioId, status);
+
+    // ✅ Update local state if API succeeds
     setPortfolios(
       portfolios.map((p) =>
         p.portfolio_id === portfolioId ? { ...p, status } : p
       )
     );
+
     setNotification({
       open: true,
       message: `Portfolio status updated to ${status}`,
       severity: "success",
     });
+  } catch (error) {
+    console.error("Error updating portfolio status:", error);
+    setNotification({
+      open: true,
+      message: "Failed to update portfolio status.",
+      severity: "error",
+    });
+  } finally {
     handleMenuClose();
-  };
+  }
+};
+
 
   const handleDelete = (portfolioId) => {
     setPortfolios(portfolios.filter((p) => p.portfolio_id !== portfolioId));
@@ -145,9 +175,10 @@ const Portfolios = () => {
     {
       field: "created_at",
       headerName: "Date Created",
-      type: "date",
       width: 160,
-      valueGetter: (params) => new Date(params.value),
+      renderCell: (params) => {
+        return formatDate(params.value);
+      },
     },
     {
       field: "actions",
@@ -194,13 +225,6 @@ const Portfolios = () => {
               }
             >
               <Block fontSize="small" sx={{ mr: 1 }} /> Reject
-            </MenuItem>
-            <MenuItem
-              onClick={() =>
-                handleStatusUpdate(params.row.portfolio_id, "hold")
-              }
-            >
-              <PauseCircle fontSize="small" sx={{ mr: 1 }} /> Hold
             </MenuItem>
             <Divider />
             <MenuItem

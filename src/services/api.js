@@ -10,6 +10,12 @@ export const fetchUsers = async (page = 1, limit = 100) => {
   return res.data;
 };
 
+export const updateUserStatus = async (userId, status) => {
+  const res = await api.patch(`/account/update-status/${userId}`, { status });
+  return res.data;
+};
+
+
 // --- Portfolio APIs ---
 export const fetchPortfolios = async (page = 1, limit = 100) => {
   const res = await api.get(`/portfolio/get-all?page=${page}&limit=${limit}`);
@@ -19,6 +25,11 @@ export const fetchPortfolios = async (page = 1, limit = 100) => {
 // ✅ Get single portfolio by ID
 export const fetchPortfolioById = async (id) => {
     const res = await api.get(`/portfolio/get-by-id/${id}`);
+    return res.data;
+  };
+
+  export const updatePortfolioStatus = async (portfolioId, status) => {
+    const res = await api.patch(`/portfolio/update-status/${portfolioId}`, { status });
     return res.data;
   };
 
