@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/Home';
 import Accounts from './pages/Accounts';
@@ -35,58 +35,56 @@ const AuthRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Login Route - redirects to home if already authenticated */}
-        <Route 
-          path="/login" 
-          element={
-            <AuthRoute>
-              <Login />
-            </AuthRoute>
-          } 
-        />
-        
-        {/* Protected Dashboard Routes */}
-        <Route 
-          path="/home" 
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/accounts" 
-          element={
-            <ProtectedRoute>
-              <Accounts />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/portfolios" 
-          element={
-            <ProtectedRoute>
-              <Portfolios />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin-profile" 
-          element={
-            <ProtectedRoute>
-              <AdminProfile />
-            </ProtectedRoute>
-          } 
-        />
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        
-        {/* Catch all route - redirect to home */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+    <Routes>
+      {/* Login Route - redirects to home if already authenticated */}
+      <Route 
+        path="/login" 
+        element={
+          <AuthRoute>
+            <Login />
+          </AuthRoute>
+        } 
+      />
+      
+      {/* Protected Dashboard Routes */}
+      <Route 
+        path="/home" 
+        element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/accounts" 
+        element={
+          <ProtectedRoute>
+            <Accounts />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/portfolios" 
+        element={
+          <ProtectedRoute>
+            <Portfolios />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin-profile" 
+        element={
+          <ProtectedRoute>
+            <AdminProfile />
+          </ProtectedRoute>
+        } 
+      />
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      
+      {/* Catch all route - redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 
