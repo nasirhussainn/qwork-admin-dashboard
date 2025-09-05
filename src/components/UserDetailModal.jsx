@@ -304,7 +304,7 @@ const UserDetailModal = ({ user, open, onClose }) => {
                             Hourly Rate
                           </Typography>
                           <Typography variant="h5" sx={{ color: "white", fontWeight: 700 }}>
-                            ${user.pricing.hourly_rate}/hr
+                            PKR{user.pricing.hourly_rate}/hr
                           </Typography>
                         </Grid>
                         <Grid item xs={12} sm={4}>
@@ -312,7 +312,7 @@ const UserDetailModal = ({ user, open, onClose }) => {
                             Min Project Rate
                           </Typography>
                           <Typography variant="h5" sx={{ color: "white", fontWeight: 700 }}>
-                            ${user.pricing.min_project_rate}
+                            PKR{user.pricing.min_project_rate}
                           </Typography>
                         </Grid>
                         <Grid item xs={12} sm={4}>

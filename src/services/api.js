@@ -1,3 +1,4 @@
+// src/services/api.js
 import axios from "axios";
 
 const api = axios.create({
@@ -5,8 +6,17 @@ const api = axios.create({
 });
 
 // --- User APIs ---
-export const fetchUsers = async (page = 1, limit = 100) => {
-  const res = await api.get(`/account/get-all?page=${page}&limit=${limit}`);
+export const fetchUsers = async (page = 1, limit = 100, status = undefined) => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  });
+  
+  if (status) {
+    params.append('status', status);
+  }
+  
+  const res = await api.get(`/account/get-all?${params.toString()}`);
   return res.data;
 };
 
@@ -14,7 +24,6 @@ export const updateUserStatus = async (userId, status) => {
   const res = await api.patch(`/account/update-status/${userId}`, { status });
   return res.data;
 };
-
 
 // --- Portfolio APIs ---
 export const fetchPortfolios = async (page = 1, limit = 100) => {
@@ -28,9 +37,9 @@ export const fetchPortfolioById = async (id) => {
     return res.data;
   };
 
-  export const updatePortfolioStatus = async (portfolioId, status) => {
-    const res = await api.patch(`/portfolio/update-status/${portfolioId}`, { status });
-    return res.data;
-  };
+export const updatePortfolioStatus = async (portfolioId, status) => {
+  const res = await api.patch(`/portfolio/update-status/${portfolioId}`, { status });
+  return res.data;
+};
 
 export default api;
