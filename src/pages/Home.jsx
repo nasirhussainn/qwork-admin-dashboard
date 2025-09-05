@@ -254,7 +254,6 @@ const Home = () => {
             value: totalUsers,
             icon: <People sx={{ fontSize: 40 }} />,
             color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            change: "+12%",
             delay: 100
           },
           {
@@ -262,7 +261,6 @@ const Home = () => {
             value: totalPortfolios,
             icon: <Collections sx={{ fontSize: 40 }} />,
             color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-            change: "+8%",
             delay: 200
           },
           {
@@ -270,7 +268,6 @@ const Home = () => {
             value: approvedPortfolios,
             icon: <CheckCircle sx={{ fontSize: 40 }} />,
             color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            change: "+15%",
             delay: 300
           },
           {
@@ -278,7 +275,6 @@ const Home = () => {
             value: pendingPortfolios,
             icon: <HourglassEmpty sx={{ fontSize: 40 }} />,
             color: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-            change: "-5%",
             delay: 400
           },
         ].map((stat, index) => (
@@ -318,7 +314,7 @@ const Home = () => {
                       <Typography variant="body1" sx={{ opacity: 0.9, fontWeight: 600 }}>
                         {stat.title}
                       </Typography>
-                      <Chip
+                      {/* <Chip
                         label={stat.change}
                         size="small"
                         sx={{
@@ -327,7 +323,7 @@ const Home = () => {
                           color: "white",
                           fontWeight: 600,
                         }}
-                      />
+                      /> */}
                     </Box>
                     <Box sx={{ opacity: 0.8 }}>
                       {stat.icon}

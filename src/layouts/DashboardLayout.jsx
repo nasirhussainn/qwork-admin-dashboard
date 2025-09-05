@@ -19,6 +19,7 @@ import {
   Paper,
   Fade,
   useTheme,
+  Skeleton,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -31,7 +32,9 @@ import {
   Logout,
   Dashboard as DashboardIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import { getAdminProfile } from "../services/api";
 
 const drawerWidth = 280;
 
@@ -40,9 +43,28 @@ const DashboardLayout = ({ children }) => {
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   const [notificationCount] = useState(3); // This could come from props or state
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [adminData, setAdminData] = useState(null);
+  const [loading, setLoading] = useState(true);
   
   const isMobile = useMediaQuery("(max-width:768px)");
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  // Load admin data
+  useEffect(() => {
+    const loadAdminData = async () => {
+      try {
+        const response = await getAdminProfile();
+        setAdminData(response.admin || response);
+      } catch (err) {
+        console.error("Error fetching admin profile for layout:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAdminData();
+  }, []);
 
   // Update time every minute
   useEffect(() => {
@@ -64,6 +86,26 @@ const DashboardLayout = ({ children }) => {
     setProfileMenuAnchor(null);
   };
 
+  const handleProfileClick = () => {
+    handleProfileMenuClose();
+    navigate('/admin-profile');
+  };
+
+  const handleLogout = () => {
+    // Clear all stored authentication data
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+    
+    // Close the menu
+    handleProfileMenuClose();
+    
+    // Navigate to login
+    navigate("/login", { replace: true });
+    
+    // Force page refresh to ensure proper state reset
+    window.location.reload();
+  };
+
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -78,6 +120,20 @@ const DashboardLayout = ({ children }) => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Helper function to get admin initials
+  const getAdminInitials = (email) => {
+    if (!email) return 'A';
+    const parts = email.split('@')[0];
+    return parts.length >= 2 ? parts.substring(0, 2).toUpperCase() : parts.charAt(0).toUpperCase();
+  };
+
+  // Helper function to truncate email for display
+  const truncateEmail = (email, maxLength = 25) => {
+    if (!email) return 'admin@qwork.com';
+    if (email.length <= maxLength) return email;
+    return email.substring(0, maxLength) + '...';
   };
 
   const drawer = (
@@ -173,33 +229,48 @@ const DashboardLayout = ({ children }) => {
                 />
               }
             >
-              <Avatar
-                sx={{
-                  width: 45,
-                  height: 45,
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  fontWeight: 700,
-                }}
-              >
-                A
-              </Avatar>
+              {loading ? (
+                <Skeleton variant="circular" width={45} height={45} />
+              ) : (
+                <Avatar
+                  sx={{
+                    width: 45,
+                    height: 45,
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                  }}
+                >
+                  {getAdminInitials(adminData?.email)}
+                </Avatar>
+              )}
             </Badge>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body1" sx={{ fontWeight: 600, color: "white" }}>
-                Admin User
-              </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: "rgba(255,255,255,0.7)",
-                  display: "block",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap"
-                }}
-              >
-                admin@qwork.com
-              </Typography>
+              {loading ? (
+                <>
+                  <Skeleton variant="text" width="80%" height={20} />
+                  <Skeleton variant="text" width="60%" height={16} />
+                </>
+              ) : (
+                <>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: "white" }}>
+                    {adminData?.role ? `${adminData.role.charAt(0).toUpperCase() + adminData.role.slice(1)} User` : 'Admin User'}
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: "rgba(255,255,255,0.7)",
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}
+                    title={adminData?.email || 'admin@qwork.com'} // Tooltip on hover
+                  >
+                    {truncateEmail(adminData?.email)}
+                  </Typography>
+                </>
+              )}
             </Box>
           </Stack>
         </Paper>
@@ -281,27 +352,6 @@ const DashboardLayout = ({ children }) => {
 
           {/* Right side actions */}
           <Stack direction="row" spacing={1} alignItems="center">
-            {/* Quick stats */}
-            <Stack direction="row" spacing={2} sx={{ mr: 2, display: { xs: "none", sm: "flex" } }}>
-              <Chip
-                label="12 Active"
-                size="small"
-                sx={{
-                  background: "linear-gradient(135deg, #10b981, #059669)",
-                  color: "white",
-                  fontWeight: 600,
-                }}
-              />
-              <Chip
-                label="5 Pending"
-                size="small"
-                sx={{
-                  background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                  color: "white",
-                  fontWeight: 600,
-                }}
-              />
-            </Stack>
 
             {/* Notifications */}
             <IconButton
@@ -342,17 +392,21 @@ const DashboardLayout = ({ children }) => {
                 }
               }}
             >
-              <Avatar
-                sx={{
-                  width: 35,
-                  height: 35,
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  fontSize: 16,
-                  fontWeight: 600,
-                }}
-              >
-                A
-              </Avatar>
+              {loading ? (
+                <Skeleton variant="circular" width={35} height={35} />
+              ) : (
+                <Avatar
+                  sx={{
+                    width: 35,
+                    height: 35,
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {getAdminInitials(adminData?.email)}
+                </Avatar>
+              )}
             </IconButton>
 
             {/* Profile Menu */}
@@ -370,7 +424,7 @@ const DashboardLayout = ({ children }) => {
                 }
               }}
             >
-              <MenuItem onClick={handleProfileMenuClose}>
+              <MenuItem onClick={handleProfileClick}>
                 <AccountCircle sx={{ mr: 2 }} />
                 Profile
               </MenuItem>
@@ -379,7 +433,7 @@ const DashboardLayout = ({ children }) => {
                 Settings
               </MenuItem>
               <Divider />
-              <MenuItem onClick={handleProfileMenuClose} sx={{ color: "error.main" }}>
+              <MenuItem onClick={handleLogout} sx={{ color: "error.main" }}>
                 <Logout sx={{ mr: 2 }} />
                 Logout
               </MenuItem>
